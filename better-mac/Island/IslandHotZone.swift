@@ -89,9 +89,18 @@ final class IslandHotZone: NSObject {
     }
 
     func exit() {
+        // If the cursor is still inside the logical hot zone (the expanded
+        // panel OR the physical notch), this isn't a real exit — it's just
+        // the cursor sitting at the top of the notch while the expanded
+        // panel has a small gap below the screen edge. Ignore it.
+        if cursorInsideHotZone() { return }
+
         collapseWork?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
+            // Re-check at fire time too, in case the cursor moved back into
+            // the notch during the debounce window.
+            if self.cursorInsideHotZone() { return }
             if self.state != .collapsed {
                 self.state = .collapsed
                 self.stopGlobalMonitor()
@@ -101,14 +110,25 @@ final class IslandHotZone: NSObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + collapseDebounce, execute: work)
     }
 
+    /// True iff the cursor is inside the union of the current panel frame
+    /// and the physical notch rect. The notch rect is always included so
+    /// that cursor positions at the very top edge of the screen (above the
+    /// expanded panel's top) don't count as exits.
+    private func cursorInsideHotZone() -> Bool {
+        guard let window = contentView?.window else { return false }
+        let p = NSEvent.mouseLocation
+        let notchFrame = (window.screen ?? NSScreen.main)?.islandCollapsedRect ?? .zero
+        let combined = window.frame.union(notchFrame)
+        return combined.contains(p)
+    }
+
     // MARK: - Global monitor for leaving the expanded bounds
 
     private func startGlobalMonitor() {
         guard globalMonitor == nil else { return }
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] event in
-            guard let self, let window = self.contentView?.window else { return }
-            let p = NSEvent.mouseLocation
-            if !window.frame.contains(p) {
+            guard let self else { return }
+            if !self.cursorInsideHotZone() {
                 self.exit()
             }
         }
