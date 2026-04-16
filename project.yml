@@ -16,8 +16,8 @@ settings:
   base:
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     SWIFT_VERSION: "5.10"
-    MARKETING_VERSION: "0.1.3"
-    CURRENT_PROJECT_VERSION: "7"
+    MARKETING_VERSION: "0.1.4"
+    CURRENT_PROJECT_VERSION: "8"
     PRODUCT_BUNDLE_IDENTIFIER: com.KaiSong06.NotchFree
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Manual
@@ -86,7 +86,7 @@ targets:
         # Sparkle: update feed + public EdDSA verification key.
         # These values are overridden by scripts/release.sh when SPARKLE_PUBLIC_ED_KEY
         # / APPCAST_URL environment variables are set at build time.
-        SUFeedURL: https://KaiSong06.github.io/better-mac/appcast.xml
+        SUFeedURL: https://KaiSong06.github.io/NotchFree/appcast.xml
         # Public EdDSA key; the matching private key lives in the macOS
         # Keychain and is used by scripts/release.sh → sign_update. Safe to
         # commit — public only.

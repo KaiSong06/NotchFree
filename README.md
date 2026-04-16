@@ -7,14 +7,14 @@ A lightweight macOS utility that brings two iPhone-style niceties to your Mac:
 
 Runs as a menu bar agent with no Dock icon. Auto-updates via Sparkle.
 
-**Website:** https://KaiSong06.github.io/better-mac
-**Download:** https://github.com/KaiSong06/better-mac/releases/latest
+**Website:** https://KaiSong06.github.io/NotchFree
+**Download:** https://github.com/KaiSong06/NotchFree/releases/latest
 
 ---
 
 ## Install
 
-1. Download the latest DMG from [Releases](https://github.com/KaiSong06/better-mac/releases/latest).
+1. Download the latest DMG from [Releases](https://github.com/KaiSong06/NotchFree/releases/latest).
 2. Open the DMG and drag `NotchFree.app` into `/Applications`.
 3. Launch the app. Grant Accessibility permission when prompted (required for the volume HUD feature to intercept hardware volume keys; the Dynamic Island works without it).
 4. Optionally toggle **Open at Login** from the menu bar icon.
@@ -91,7 +91,7 @@ git push && git push --tags
 gh release create v0.1.0 --generate-notes build/NotchFree-0.1.0.dmg
 ```
 
-GitHub Pages (serving `/docs` on `main`) then has the updated `appcast.xml` live at https://KaiSong06.github.io/better-mac/appcast.xml, so existing installs pick up the update on their next Sparkle check.
+GitHub Pages (serving `/docs` on `main`) then has the updated `appcast.xml` live at https://KaiSong06.github.io/NotchFree/appcast.xml, so existing installs pick up the update on their next Sparkle check.
 
 ---
 
