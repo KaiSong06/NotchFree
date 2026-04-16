@@ -2,7 +2,7 @@
 
 A lightweight macOS utility that brings two iPhone-style niceties to your Mac:
 
-1. **Dynamic Island** — hover the top-middle of the screen and a black rounded panel drops out of the notch showing the currently playing track (artwork, title, artist, play/pause/skip, and seek bar). Blends seamlessly into the physical notch on notched MacBooks; falls back to a floating pill on non-notched displays.
+1. **Dynamic Island** — hover the top-middle of the screen and a black rounded panel drops out of the notch showing the currently playing track (artwork, title, artist, play/pause/skip, and seek bar). When audio is playing the collapsed island widens into a compact pill showing the album cover on the left and an animated waveform on the right (frozen when paused). Blends seamlessly into the physical notch on notched MacBooks; falls back to a floating pill on non-notched displays.
 2. **iPhone-style volume HUD** — the native macOS volume HUD is suppressed. In its place, a tall pill appears on the right edge of the screen showing the current volume, the output device icon (built-in speakers, AirPods, Bluetooth, USB, AirPlay), and the device name.
 
 Runs as a menu bar agent with no Dock icon.
