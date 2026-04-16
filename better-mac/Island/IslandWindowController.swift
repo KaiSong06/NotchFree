@@ -8,7 +8,6 @@ import Combine
 final class IslandWindowController: NSObject {
     // Tuneable geometry
     private let expandedSize = CGSize(width: 420, height: 140)
-    private let expandedTopPadding: CGFloat = 4  // visible distance below the menu bar
     // Playing-state width only; the height matches the idle notch so the
     // pill reads as a horizontally-extended version of the same shape.
     private let playingWidth: CGFloat = 260
@@ -142,9 +141,12 @@ final class IslandWindowController: NSObject {
         let width = expandedSize.width
         let height = expandedSize.height
         let x = screen.frame.midX - width / 2
-        // The expanded rect sits flush under the menu bar so the visual top
-        // aligns with the notch opening.
-        let y = top - height - expandedTopPadding
+        // Flush to the top of the screen so the expanded panel extends the
+        // hardware notch downward with no gap. A gap here is both visually
+        // disconnected from the notch and a source of hover flicker: the
+        // cursor can land between the screen edge and the panel top, which
+        // NSTrackingArea reports as an exit.
+        let y = top - height
         return CGRect(x: x, y: y, width: width, height: height)
     }
 
