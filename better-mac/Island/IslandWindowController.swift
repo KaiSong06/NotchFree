@@ -9,23 +9,26 @@ final class IslandWindowController: NSObject {
     // Tuneable geometry
     private let expandedSize = CGSize(width: 420, height: 140)
     private let expandedTopPadding: CGFloat = 4  // visible distance below the menu bar
-    private let collapsedHoverPadX: CGFloat = 8
-    private let collapsedHoverPadY: CGFloat = 6
+    private let playingSize = CGSize(width: 340, height: 36)
 
     private let panel: IslandPanel
     private let hostingView: NSHostingView<IslandContainer>
     private let container: ObservableContainer
-    private let hotZone: IslandHotZone
+    private var hotZone: IslandHotZone!
     private let store: NowPlayingStore
     private let appState: AppState
     private var cancellables: Set<AnyCancellable> = []
     private var isShown = false
 
+    /// Latest raw inputs. Both feed into `IslandStateResolver.resolve` via
+    /// `updateResolvedState()`.
+    private var isHovering = false
+
     init(store: NowPlayingStore, appState: AppState) {
         self.store = store
         self.appState = appState
 
-        self.container = ObservableContainer(state: .collapsed)
+        self.container = ObservableContainer(state: .idle)
         self.hostingView = NSHostingView(rootView: IslandContainer(container: container, store: store))
         self.hostingView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -61,17 +64,18 @@ final class IslandWindowController: NSObject {
         }
         self.panel = panel
 
-        let weakContainer = container
-        self.hotZone = IslandHotZone { [weak weakContainer] newState in
-            Task { @MainActor in
-                weakContainer?.state = (newState == .expanded) ? .expanded : .collapsed
-            }
-        }
-
         super.init()
 
+        // After super.init we can capture self for the hot zone callback.
+        self.hotZone = IslandHotZone { [weak self] newState in
+            Task { @MainActor in
+                self?.setHovering(newState == .expanded)
+            }
+        }
         hotZone.attach(to: hostingView)
+
         observeContainerState()
+        observeStore()
 
         // Reposition if displays change.
         NotificationCenter.default.addObserver(
@@ -100,13 +104,26 @@ final class IslandWindowController: NSObject {
     }
 
     func reposition() {
-        let collapsed = collapsedRect()
-        let frame = container.state == .expanded ? expandedRect(from: collapsed) : collapsed
-        panel.setFrame(frame, display: true, animate: false)
+        panel.setFrame(frame(for: container.state), display: true, animate: false)
         hotZone.refreshTrackingArea()
     }
 
     // MARK: - Frame math
+
+    /// Resolve the target panel frame for a given island state. All three
+    /// states center on the main screen's notch.
+    private func frame(for state: IslandState) -> CGRect {
+        let collapsed = collapsedRect()
+        switch state {
+        case .idle:
+            return collapsed
+        case .playing:
+            let screen = NSScreen.main ?? NSScreen.screens.first!
+            return Self.playingRect(in: screen.frame, size: playingSize)
+        case .expanded:
+            return expandedRect(from: collapsed)
+        }
+    }
 
     private func collapsedRect() -> CGRect {
         let screen = NSScreen.main ?? NSScreen.screens.first!
@@ -125,6 +142,49 @@ final class IslandWindowController: NSObject {
         return CGRect(x: x, y: y, width: width, height: height)
     }
 
+    /// Pure rect math: position the playing pill flush to the top-center of
+    /// the given screen. Exposed as `nonisolated static` for unit testing.
+    nonisolated static func playingRect(in screenFrame: CGRect, size: CGSize) -> CGRect {
+        let x = screenFrame.midX - size.width / 2
+        let y = screenFrame.maxY - size.height  // top-flush
+        return CGRect(x: x, y: y, width: size.width, height: size.height)
+    }
+
+    // MARK: - Input wiring
+
+    /// Called from the hot zone callback. Records the new hover state and
+    /// triggers a full resolve.
+    private func setHovering(_ hovering: Bool) {
+        guard isHovering != hovering else { return }
+        isHovering = hovering
+        updateResolvedState()
+    }
+
+    /// Subscribe to whatever NowPlayingStore publishes that can change
+    /// `hasTrack`. `title` is the canonical signal: `hasTrack` is a title-
+    /// presence check, so any change there can flip the answer.
+    private func observeStore() {
+        store.$title
+            .map { $0?.isEmpty == false }
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.updateResolvedState()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Re-resolve the island state from the current inputs and push the
+    /// result into the observable container. Transitions are animated by
+    /// `observeContainerState()` further down.
+    private func updateResolvedState() {
+        container.state = IslandStateResolver.resolve(
+            hovering: isHovering,
+            hasTrack: store.hasTrack
+        )
+    }
+
     // MARK: - State observation
 
     private func observeContainerState() {
@@ -137,8 +197,7 @@ final class IslandWindowController: NSObject {
     }
 
     private func animateFrame(for state: IslandState) {
-        let collapsed = collapsedRect()
-        let target = state == .expanded ? expandedRect(from: collapsed) : collapsed
+        let target = frame(for: state)
 
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.24
