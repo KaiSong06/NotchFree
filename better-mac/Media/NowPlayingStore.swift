@@ -54,7 +54,11 @@ final class NowPlayingStore: ObservableObject {
     func pause() { bridge.pause() }
 
     func toggle() {
-        if isPlaying { bridge.pause() } else { bridge.play() }
+        // One command only — MediaRemote's togglePlayPause handles the
+        // state transition atomically so we don't depend on our local
+        // `isPlaying` being in sync with whatever the controlling app
+        // currently thinks. Previously this method fired BOTH an explicit
+        // pause/play AND a toggle, which cancelled itself out.
         bridge.toggle()
     }
 
