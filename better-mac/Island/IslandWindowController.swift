@@ -138,12 +138,16 @@ final class IslandWindowController: NSObject {
     }
 
     private func expandedRect(from collapsed: CGRect) -> CGRect {
-        // Vertical-only expansion: width and x inherit from the collapsed
-        // notch rect so the panel drops straight down from the hardware
-        // notch. Top stays flush with the screen edge (no gap — a gap both
-        // looks disconnected and is a hover-flicker source).
+        // Vertical-only expansion: width matches whatever the pre-expansion
+        // state was showing — the notch width when idle, the playing pill's
+        // width when a track is loaded. Centered on the same axis as the
+        // notch (screen midX). Top stays flush with the screen edge to avoid
+        // both a visual gap and the hover-flicker it used to cause.
+        let screen = NSScreen.main ?? NSScreen.screens.first!
+        let width = store.hasTrack ? playingWidth : collapsed.width
+        let x = screen.frame.midX - width / 2
         let y = collapsed.maxY - expandedHeight
-        return CGRect(x: collapsed.minX, y: y, width: collapsed.width, height: expandedHeight)
+        return CGRect(x: x, y: y, width: width, height: expandedHeight)
     }
 
     /// Pure rect math: position the playing pill flush to the top-center of

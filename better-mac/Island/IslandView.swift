@@ -92,15 +92,17 @@ struct IslandView: View {
             )
             .fill(Color.black)
         case .expanded:
-            // Top corners are square: the panel width now matches the
-            // hardware notch exactly, so the top edge aligns with the notch
-            // sides and any top rounding would fight the camera cutout.
+            // Top corners match the notch-corner radius: when expanded from
+            // the playing pill the panel extends past the notch horizontally,
+            // so the top edges are visible in the menu bar area and need
+            // rounding. When expanded from idle (notch width) the corners
+            // fall under the camera cutout and the radius is invisible.
             UnevenRoundedRectangle(
                 cornerRadii: .init(
-                    topLeading: 0,
+                    topLeading: notchCorner,
                     bottomLeading: expandedCorner,
                     bottomTrailing: expandedCorner,
-                    topTrailing: 0
+                    topTrailing: notchCorner
                 ),
                 style: .continuous
             )
