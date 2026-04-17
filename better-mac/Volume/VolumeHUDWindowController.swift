@@ -120,10 +120,15 @@ final class HUDModel: ObservableObject {
     @Published var deviceName: String = "Speakers"
 
     func update(volume: Float, muted: Bool, kind: OutputKind, deviceName: String) {
-        self.volume = volume
-        self.muted = muted
-        self.kind = kind
-        self.deviceName = deviceName
+        // Volume/mute drive the visible fill and icon, so animate those
+        // changes with a gentle spring. Kind/deviceName change rarely and
+        // aren't visually interpolated, but they ride along for simplicity.
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.92)) {
+            self.volume = volume
+            self.muted = muted
+            self.kind = kind
+            self.deviceName = deviceName
+        }
     }
 }
 

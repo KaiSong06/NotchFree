@@ -24,37 +24,39 @@ struct VolumeHUDView: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let fillH = size.height * fillFraction
+            // Inner pill dimensions after the 8pt shadow padding.
+            let innerWidth = size.width - 16
+            let innerHeight = size.height - 16
+            let capRadius = innerWidth / 2
+            // Stop the fill at the top of the straight section so the clip
+            // never curls the top edge inward. The top cap stays track-coloured.
+            let fillH = max(0, (innerHeight - capRadius) * fillFraction)
             ZStack(alignment: .bottom) {
-                // Track — the iPhone-style translucent light grey backdrop.
+                // Track — a dedicated Capsule shape so the shadow traces the
+                // pill outline instead of the ZStack's bounding rectangle.
                 Capsule(style: .continuous)
                     .fill(Color(white: 0.55).opacity(0.9))
+                    .shadow(color: Color.black.opacity(0.22), radius: 10, x: 0, y: 3)
 
-                // Fill — a rectangle that grows from the bottom. The parent
-                // `clipShape(Capsule)` crops it to the pill's outline, so the
-                // fill's bottom tapers with the pill's curve automatically.
-                // Rectangle height is a native animatable SwiftUI property,
-                // unlike a Canvas draw, so the fill tweens smoothly when
-                // `fillFraction` changes — including blending across rapid
-                // key repeats thanks to the interruptible spring.
-                Rectangle()
-                    .fill(Color.white)
-                    .frame(height: fillH)
-                    .animation(
-                        .spring(response: 0.45, dampingFraction: 0.92),
-                        value: fillH
-                    )
+                // Fill + icon stack, clipped to the same capsule so the fill's
+                // bottom tapers with the pill's curve and nothing bleeds past
+                // the shadow'd track. This sub-stack has no shadow of its
+                // own — the track beneath carries it.
+                ZStack(alignment: .bottom) {
+                    Rectangle()
+                        .fill(Color.white)
+                        .frame(height: fillH)
 
-                Image(systemName: iconName)
-                    .resizable()
-                    .symbolRenderingMode(.monochrome)
-                    .scaledToFit()
-                    .foregroundStyle(.black)
-                    .frame(width: size.width * 0.42, height: size.width * 0.42)
-                    .padding(.bottom, size.width * 0.32)
+                    Image(systemName: iconName)
+                        .resizable()
+                        .symbolRenderingMode(.monochrome)
+                        .scaledToFit()
+                        .foregroundStyle(.black)
+                        .frame(width: size.width * 0.42, height: size.width * 0.42)
+                        .padding(.bottom, size.width * 0.32)
+                }
+                .clipShape(Capsule(style: .continuous))
             }
-            .clipShape(Capsule(style: .continuous))
-            .shadow(color: Color.black.opacity(0.22), radius: 10, x: 0, y: 3)
             .padding(8)
             .accessibilityLabel(Text(accessibilityLabel))
         }
