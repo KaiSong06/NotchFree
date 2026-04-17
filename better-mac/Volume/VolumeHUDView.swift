@@ -26,9 +26,9 @@ struct VolumeHUDView: View {
             let size = proxy.size
             let fillH = size.height * fillFraction
             ZStack(alignment: .bottom) {
-                // Track — the dark backdrop, always full pill.
+                // Track — the iPhone-style translucent light grey backdrop.
                 Capsule(style: .continuous)
-                    .fill(Color(white: 0.28))
+                    .fill(Color(white: 0.55).opacity(0.9))
 
                 // Fill — a rectangle that grows from the bottom. The parent
                 // `clipShape(Capsule)` crops it to the pill's outline, so the
@@ -41,7 +41,7 @@ struct VolumeHUDView: View {
                     .fill(Color.white)
                     .frame(height: fillH)
                     .animation(
-                        .spring(response: 0.28, dampingFraction: 0.86),
+                        .spring(response: 0.45, dampingFraction: 0.92),
                         value: fillH
                     )
 
@@ -54,35 +54,35 @@ struct VolumeHUDView: View {
                     .padding(.bottom, size.width * 0.32)
             }
             .clipShape(Capsule(style: .continuous))
+            .shadow(color: Color.black.opacity(0.22), radius: 10, x: 0, y: 3)
+            .padding(8)
             .accessibilityLabel(Text(accessibilityLabel))
         }
     }
 
     // MARK: - Symbol resolution
 
-    /// SF Symbol name for the active output. Falls back to a generic speaker
-    /// glyph for unknown transports so the pill always renders something.
+    /// SF Symbol name for the active output. For speaker-type outputs the
+    /// glyph is chosen from the `speaker.wave.N.fill` family so the number
+    /// of wave bars tracks the current level — matching iOS's volume HUD.
     private var iconName: String {
         if muted { return "speaker.slash.fill" }
         switch kind {
-        case .airPods: return "airpods"
+        case .airPods:           return "airpods"
         case .builtInHeadphones: return "headphones"
-        case .builtInSpeakers: return "speaker.wave.2.fill"
-        case .bluetooth: return bluetoothSymbol
-        case .usb: return "speaker.wave.2.fill"
-        case .airPlay: return "airplayaudio"
-        case .other: return "speaker.wave.2.fill"
+        case .airPlay:           return "airplayaudio"
+        case .builtInSpeakers,
+             .usb,
+             .bluetooth,
+             .other:             return speakerSymbolForLevel
         }
     }
 
-    /// `bluetooth` SF Symbol exists on macOS 14+ but isn't in every snapshot
-    /// of the framework; fall back to a wave glyph if the system can't
-    /// resolve it.
-    private var bluetoothSymbol: String {
-        if NSImage(systemSymbolName: "bluetooth", accessibilityDescription: nil) != nil {
-            return "bluetooth"
-        }
-        return "dot.radiowaves.left.and.right"
+    private var speakerSymbolForLevel: String {
+        if clampedVolume <= 0.001 { return "speaker.fill" }
+        if clampedVolume <= 0.33  { return "speaker.wave.1.fill" }
+        if clampedVolume <= 0.66  { return "speaker.wave.2.fill" }
+        return "speaker.wave.3.fill"
     }
 
     private var accessibilityLabel: String {
