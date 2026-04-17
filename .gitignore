@@ -4,6 +4,9 @@
 # Claude Code worktree directory (belongs to parent project)
 .claude/
 
+# Ephemeral tool output (ce:review per-reviewer JSON artifacts, etc.)
+.context/
+
 # Xcode
 xcuserdata/
 *.xcworkspace/xcuserdata/

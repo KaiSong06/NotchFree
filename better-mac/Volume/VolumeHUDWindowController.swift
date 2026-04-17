@@ -11,10 +11,24 @@ final class VolumeHUDWindowController {
     private let hostingView: NSHostingView<ContentWrapper>
     private let model: HUDModel
 
-    private let hudSize = CGSize(width: 56, height: 200)
-    private let edgeInset: CGFloat = 16
+    // Host panel = pill size + shadow margins so the drop shadow has room
+    // to render on the non-flush sides without clipping. The pill itself
+    // (VolumeHUDView.pillSize, 56×200) aligns to the panel's trailing edge,
+    // so its right edge sits flush with the screen edge (which is where
+    // the shadow is intentionally clipped away).
+    private var hudSize: CGSize {
+        CGSize(
+            width: VolumeHUDView.pillSize.width + VolumeHUDView.shadowMarginH,
+            height: VolumeHUDView.pillSize.height + VolumeHUDView.shadowMarginV * 2
+        )
+    }
     private var dismissWork: DispatchWorkItem?
-    private let dismissAfter: TimeInterval = 1.8
+    // iOS auto-dismisses the volume HUD ~1.5 s after the last adjustment.
+    private let dismissAfter: TimeInterval = 1.5
+    // True while a fadeOut animation is in flight. A concurrent show()
+    // clears this so the fadeOut's completion handler does not call
+    // orderOut on the panel the show() just raised.
+    private var isDismissing = false
 
     init(appState: AppState, audio: AudioOutputMonitor) {
         self.appState = appState
@@ -65,10 +79,29 @@ final class VolumeHUDWindowController {
         self.hostingView = hosting
 
         reposition()
+
+        // Reposition on screen changes — external display hot-plug, resolution
+        // change, menu-bar visibility toggles. Mirrors IslandWindowController.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(onScreenChange),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+    }
+
+    @objc private func onScreenChange() {
+        reposition()
     }
 
     func show(volume: Float, muted: Bool, kind: OutputKind, deviceName: String) {
         model.update(volume: volume, muted: muted, kind: kind, deviceName: deviceName)
+
+        // A show() during a fadeOut must cancel the fadeOut's deferred
+        // orderOut — otherwise the old completion handler fires after the
+        // new alpha→1 animation and snap-hides the panel the user is
+        // looking at.
+        isDismissing = false
 
         reposition()
         panel.orderFrontRegardless()
@@ -78,7 +111,7 @@ final class VolumeHUDWindowController {
         panel.invalidateShadow()
 
         NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.22
+            ctx.duration = 0.18
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().alphaValue = 1
         }
@@ -92,20 +125,29 @@ final class VolumeHUDWindowController {
     }
 
     private func fadeOut() {
+        isDismissing = true
         NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.32
+            ctx.duration = 0.25
             ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             panel.animator().alphaValue = 0
         } completionHandler: { [weak self] in
-            self?.panel.orderOut(nil)
+            guard let self, self.isDismissing else { return }
+            self.isDismissing = false
+            self.panel.orderOut(nil)
         }
     }
 
     private func reposition() {
         let screen = NSScreen.main ?? NSScreen.screens.first!
-        let frame = screen.visibleFrame
-        let x = frame.maxX - hudSize.width - edgeInset
-        let y = frame.midY - hudSize.height / 2
+        // Hybrid placement:
+        //  - X: use visibleFrame.maxX so the pill respects a Dock on the
+        //    right (sits adjacent to it, not underneath). On Dock-bottom /
+        //    Dock-left / Dock-auto-hide setups visibleFrame.maxX equals
+        //    frame.maxX, so the pill is flush with the physical screen edge.
+        //  - Y: use frame.midY so the HUD's vertical position is stable
+        //    regardless of Dock auto-hide state.
+        let x = screen.visibleFrame.maxX - hudSize.width
+        let y = screen.frame.midY - hudSize.height / 2
         panel.setFrame(CGRect(x: x, y: y, width: hudSize.width, height: hudSize.height), display: true, animate: false)
     }
 }
@@ -120,15 +162,18 @@ final class HUDModel: ObservableObject {
     @Published var deviceName: String = "Speakers"
 
     func update(volume: Float, muted: Bool, kind: OutputKind, deviceName: String) {
-        // Volume/mute drive the visible fill and icon, so animate those
-        // changes with a gentle spring. Kind/deviceName change rarely and
-        // aren't visually interpolated, but they ride along for simplicity.
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.92)) {
-            self.volume = volume
-            self.muted = muted
-            self.kind = kind
-            self.deviceName = deviceName
-        }
+        // Plain assignment — no withAnimation. The fill Rectangle and the
+        // inversion mask in VolumeHUDView each carry an explicit
+        // `.animation(VolumeHUDView.volumeSpring, value: fillH)` modifier,
+        // so the spring lives at exactly one place per layer. Wrapping an
+        // ambient withAnimation here would create a competing transaction
+        // that drives the mask Rectangle while the fill Rectangle's
+        // view-local modifier drives its own copy, producing a ~1-frame
+        // divergence at the inversion boundary under load.
+        self.volume = volume
+        self.muted = muted
+        self.kind = kind
+        self.deviceName = deviceName
     }
 }
 

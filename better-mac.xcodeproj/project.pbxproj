@@ -21,6 +21,7 @@
 		55A479BAEEE3B810E1479B84 /* SeekBarMathTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DD12BA5EDF03A450DC339B /* SeekBarMathTests.swift */; };
 		5C0CD3FF3DD9694BF774C2F8 /* SpotifyAppleScriptClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62C7EE105A5622E39CBAE5E /* SpotifyAppleScriptClient.swift */; };
 		639DB725B15E322C23D53D45 /* IslandStateResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0D9F71890B0DE0D8C1122E5 /* IslandStateResolverTests.swift */; };
+		6B4662E19116648A50EFD8F6 /* IslandHoverWidthTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C70CE48E569F8BA1A5A39039 /* IslandHoverWidthTests.swift */; };
 		6DB8C14255D24269763B56B0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BDC55F104D14EF69E8D800 /* AppDelegate.swift */; };
 		749FF53A263571BF8EAB136F /* NowPlayingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAE5445C638E34F14F609439 /* NowPlayingStore.swift */; };
 		81470921E8CD90D5AF3D665E /* VolumeKeyDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07418CF4DD3E6D55DAEC79F3 /* VolumeKeyDecodingTests.swift */; };
@@ -79,6 +80,7 @@
 		B71065B0518B06ACCC45F925 /* SeekBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekBarView.swift; sourceTree = "<group>"; };
 		C0D9F71890B0DE0D8C1122E5 /* IslandStateResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandStateResolverTests.swift; sourceTree = "<group>"; };
 		C6DD12BA5EDF03A450DC339B /* SeekBarMathTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeekBarMathTests.swift; sourceTree = "<group>"; };
+		C70CE48E569F8BA1A5A39039 /* IslandHoverWidthTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandHoverWidthTests.swift; sourceTree = "<group>"; };
 		CAE5445C638E34F14F609439 /* NowPlayingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingStore.swift; sourceTree = "<group>"; };
 		D02E5958C27FDAC8F60459BC /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
 		D60FBF1DDD1E072DCCE217CB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 			isa = PBXGroup;
 			children = (
 				1A54A3D5FBC8B39163DA6E63 /* AudioOutputMonitorTests.swift */,
+				C70CE48E569F8BA1A5A39039 /* IslandHoverWidthTests.swift */,
 				0F1ABA43FFE73BE60D822D4D /* IslandPlayingRectTests.swift */,
 				C0D9F71890B0DE0D8C1122E5 /* IslandStateResolverTests.swift */,
 				316FD5D6B6663832CE979294 /* NowPlayingStoreTests.swift */,
@@ -341,6 +344,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				13DA9CAB61686041AC24B5F2 /* AudioOutputMonitorTests.swift in Sources */,
+				6B4662E19116648A50EFD8F6 /* IslandHoverWidthTests.swift in Sources */,
 				13F76761C9BFC1FF4AE36337 /* IslandPlayingRectTests.swift in Sources */,
 				639DB725B15E322C23D53D45 /* IslandStateResolverTests.swift in Sources */,
 				D65DE48D7A0383AB112FE73B /* NSScreenNotchTests.swift in Sources */,
@@ -399,7 +403,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -415,7 +419,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.4;
+				MARKETING_VERSION = 0.1.5;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
@@ -466,7 +470,7 @@
 				CODE_SIGN_IDENTITY = BD481265772546378FDE284EDFF523FCE524D765;
 				CODE_SIGN_STYLE = Manual;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = K4DKFK28TA;
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -488,7 +492,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 0.1.4;
+				MARKETING_VERSION = 0.1.5;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
