@@ -11,7 +11,7 @@ final class VolumeHUDWindowController {
     private let hostingView: NSHostingView<ContentWrapper>
     private let model: HUDModel
 
-    private let hudSize = CGSize(width: 64, height: 220)
+    private let hudSize = CGSize(width: 56, height: 200)
     private let edgeInset: CGFloat = 16
     private var dismissWork: DispatchWorkItem?
     private let dismissAfter: TimeInterval = 1.8
@@ -78,7 +78,7 @@ final class VolumeHUDWindowController {
         panel.invalidateShadow()
 
         NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.12
+            ctx.duration = 0.22
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().alphaValue = 1
         }
@@ -93,8 +93,8 @@ final class VolumeHUDWindowController {
 
     private func fadeOut() {
         NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.2
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
+            ctx.duration = 0.32
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             panel.animator().alphaValue = 0
         } completionHandler: { [weak self] in
             self?.panel.orderOut(nil)
