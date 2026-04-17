@@ -7,12 +7,14 @@ import Combine
 @MainActor
 final class IslandWindowController: NSObject {
     // Tuneable geometry
-    // Expansion is vertical-only: width and x match the hardware notch so
-    // the panel drops straight down from it. Only height is a free parameter.
     private let expandedHeight: CGFloat = 180
     // Additional height over the collapsed rect during the peek state.
     // Small enough to read as a hover hint, big enough to not look like jitter.
     private let peekHeightDelta: CGFloat = 12
+    // Additional width over the base (notch/playing) rect when hovering.
+    // Applied to both peek and expanded so the full expansion inherits the
+    // same width as the peek — matches the "expand in all directions" spec.
+    private let peekWidthDelta: CGFloat = 20
     // Playing-state width only; the height matches the idle notch so the
     // pill reads as a horizontally-extended version of the same shape.
     private let playingWidth: CGFloat = 260
@@ -143,27 +145,52 @@ final class IslandWindowController: NSObject {
     }
 
     private func expandedRect(from collapsed: CGRect) -> CGRect {
-        // Vertical-only expansion: width matches whatever the pre-expansion
-        // state was showing — the notch width when idle, the playing pill's
-        // width when a track is loaded. Centered on the same axis as the
-        // notch (screen midX). Top stays flush with the screen edge to avoid
-        // both a visual gap and the hover-flicker it used to cause.
+        // Width matches the peek width so the full expansion inherits the
+        // hover-preview's horizontal grow — the "same width as hover expansion"
+        // spec. Height snaps to `expandedHeight`. Top stays flush with the
+        // screen edge to avoid both a visual gap and the hover-flicker it
+        // used to cause. Centered on screen midX.
         let screen = NSScreen.main ?? NSScreen.screens.first!
-        let width = store.hasTrack ? playingWidth : collapsed.width
+        let width = Self.hoverWidth(
+            hasTrack: store.hasTrack,
+            playingWidth: playingWidth,
+            notchWidth: collapsed.width,
+            widthDelta: peekWidthDelta
+        )
         let x = screen.frame.midX - width / 2
         let y = collapsed.maxY - expandedHeight
         return CGRect(x: x, y: y, width: width, height: expandedHeight)
     }
 
     private func peekRect(from collapsed: CGRect) -> CGRect {
-        // Same width rule as expanded — vertical-only grow by `peekHeightDelta`
-        // over the collapsed height. Top stays flush with the screen edge.
+        // Grow in L / R / bottom: width = baseWidth + peekWidthDelta,
+        // height = collapsedHeight + peekHeightDelta. Top stays flush with
+        // the screen edge.
         let screen = NSScreen.main ?? NSScreen.screens.first!
-        let width = store.hasTrack ? playingWidth : collapsed.width
+        let width = Self.hoverWidth(
+            hasTrack: store.hasTrack,
+            playingWidth: playingWidth,
+            notchWidth: collapsed.width,
+            widthDelta: peekWidthDelta
+        )
         let x = screen.frame.midX - width / 2
         let height = collapsed.height + peekHeightDelta
         let y = collapsed.maxY - height
         return CGRect(x: x, y: y, width: width, height: height)
+    }
+
+    /// Width of the peek / expanded panel, given whether a track is loaded
+    /// and the notch width. Pure function for unit testability. The peek and
+    /// expanded states share this width so the full expansion inherits the
+    /// peek's horizontal grow.
+    nonisolated static func hoverWidth(
+        hasTrack: Bool,
+        playingWidth: CGFloat,
+        notchWidth: CGFloat,
+        widthDelta: CGFloat
+    ) -> CGFloat {
+        let base = hasTrack ? playingWidth : notchWidth
+        return base + widthDelta
     }
 
     /// Pure rect math: position the playing pill flush to the top-center of
