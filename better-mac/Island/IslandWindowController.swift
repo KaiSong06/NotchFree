@@ -177,7 +177,16 @@ final class IslandWindowController: NSObject {
             .removeDuplicates()
             .sink { [weak self] _ in
                 Task { @MainActor in
-                    self?.updateResolvedState()
+                    guard let self else { return }
+                    self.updateResolvedState()
+                    // While expanded the resolved state stays `.expanded`
+                    // across a hasTrack flip, so the container observer's
+                    // removeDuplicates suppresses the frame animation. The
+                    // expanded width depends on hasTrack, so re-animate
+                    // explicitly here.
+                    if self.container.state == .expanded {
+                        self.animateFrame(for: .expanded)
+                    }
                 }
             }
             .store(in: &cancellables)
