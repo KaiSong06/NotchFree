@@ -20,9 +20,19 @@ struct VolumeHUDView: View {
     let showPercentage: Bool
 
     // Visible pill size. The hosting container (see VolumeHUDWindowController)
-    // is larger so the shadow has room to render on left/top/bottom.
-    private let pillWidth: CGFloat = 56
-    private let pillHeight: CGFloat = 200
+    // derives its panel size from these + the shadow margins below so the
+    // drop shadow has room to render without clipping.
+    static let pillSize = CGSize(width: 56, height: 200)
+    // Horizontal shadow reach = shadowRadius (20) on the non-flush side.
+    // The right side is intentionally flush to the screen edge.
+    static let shadowMarginH: CGFloat = 20
+    // Vertical shadow reach = shadowRadius (20) + abs(shadow y offset 4) = 24
+    // on both top and bottom.
+    static let shadowMarginV: CGFloat = 24
+
+    // Single source of truth for the fill/mask animation so the two layers
+    // cannot drift if the spring is retuned.
+    static let volumeSpring: Animation = .spring(response: 0.38, dampingFraction: 0.86)
 
     private var clampedVolume: CGFloat {
         CGFloat(max(0, min(1, volume)))
@@ -33,10 +43,10 @@ struct VolumeHUDView: View {
     }
 
     var body: some View {
-        let fillH = pillHeight * fillFraction
+        let fillH = Self.pillSize.height * fillFraction
         // iOS proportions: icon ~46% of pill width, ~22% bottom padding.
-        let iconSize = pillWidth * 0.46
-        let iconBottom = pillWidth * 0.22
+        let iconSize = Self.pillSize.width * 0.46
+        let iconBottom = Self.pillSize.width * 0.22
 
         ZStack(alignment: .bottom) {
             // Track — vibrancy material so the pill tints / blurs whatever
@@ -50,17 +60,16 @@ struct VolumeHUDView: View {
             Rectangle()
                 .fill(Color.white)
                 .frame(height: fillH)
-                .animation(
-                    .spring(response: 0.38, dampingFraction: 0.86),
-                    value: fillH
-                )
+                .animation(Self.volumeSpring, value: fillH)
 
             // Icon layer — differential inversion.
             // White glyph is always drawn; the black glyph overlays only in
             // the bottom `fillH` region, so the glyph reads as inverted
             // wherever the white fill sits behind it. Both icons share the
             // same position, so the inversion boundary is pixel-exact as the
-            // fill animates.
+            // fill animates. The mask Rectangle carries its own explicit
+            // spring keyed on fillH so it stays locked to the fill even
+            // without an ambient withAnimation transaction.
             ZStack {
                 Image(systemName: iconName)
                     .resizable()
@@ -68,6 +77,9 @@ struct VolumeHUDView: View {
                     .foregroundStyle(.white)
                     .frame(width: iconSize, height: iconSize)
                     .padding(.bottom, iconBottom)
+                    // Outer frame expands to the pill bounds so
+                    // `.alignment: .bottom` pins the icon to the pill,
+                    // not to its own bounding box.
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
 
                 Image(systemName: iconName)
@@ -81,10 +93,11 @@ struct VolumeHUDView: View {
                         Rectangle()
                             .frame(height: fillH)
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            .animation(Self.volumeSpring, value: fillH)
                     )
             }
         }
-        .frame(width: pillWidth, height: pillHeight)
+        .frame(width: Self.pillSize.width, height: Self.pillSize.height)
         .clipShape(Capsule(style: .continuous))
         // Softer, larger shadow matches iOS elevation.
         .shadow(color: Color.black.opacity(0.12), radius: 20, x: 0, y: 4)
